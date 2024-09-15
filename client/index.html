@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat en Tiempo Real</title>
+    <script type="module">
+      import { io } from "https://cdn.socket.io/4.7.5/socket.io.esm.min.js";
+      
+      const getUsername = async () => {
+        if (!localStorage.getItem("username")) {
+          const username = prompt("Ingresa tu nombre de usuario");
+          localStorage.setItem("username", username);
+          return username;
+        }
+        return localStorage.getItem("username");
+      };
+      
+      const socket = io({
+        auth: {
+          // Informacion que ira en cada peticion
+          username: await getUsername(),
+          serverOffset: 0,
+        },
+      });
+
+      const form = document.querySelector("form");
+      const input = document.getElementById("message");
+      const messages = document.getElementById("messages");
+
+      socket.on("chat message", (msg, serverOffset, username) => {
+        const item = document.createElement("li");
+        item.innerHTML = `
+          <p class="message-content">${msg}</p>
+          <span class="message-author">${username}</span>
+        `;
+        messages.appendChild(item);
+        if (username === socket.auth.username) {
+          item.classList.add('sended-messages')
+        }
+        console.log('eejcutando')
+        socket.auth.serverOffset = serverOffset;
+
+        messages.scrollTop = messages.scrollHeight;
+      });
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        if (input.value) {
+          socket.emit("chat message", input.value);
+          input.value = "";
+        }
+      });
+    </script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+      }
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        place-content: center;
+        height: 100dvh;
+        padding: 10px;
+      }
+      #chat {
+        width: 400px;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 10px 10px 0px 0px;
+        overflow: hidden;
+        background-color: #2c2c2c;
+        position: relative;
+      }
+      h1 {
+        background: #5db5db;
+        padding: 10px;
+        color: #fff;
+      }
+      form {
+        display: flex;
+        width: 400px;
+        background-color: #468ba9;
+        border-radius: 0px 0px 10px 10px;
+        overflow: hidden;
+      }
+      #message {
+        all: unset;
+        display: flex;
+        flex-grow: 1;
+        padding: 15px 10px;
+        background: #464646;
+        color: #fff;
+      }
+      #message:focus {
+        outline: none;
+      }
+      button[type="submit"] {
+        background: #5db5db;
+        color: #fff;
+        border: none;
+        padding: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      button[type="submit"]:hover {
+        background: #468ba9;
+      }
+
+      #messages {
+        display: flex;
+        flex-direction: column;
+        padding: 10px;
+        list-style: none;
+        gap: 5px;
+        max-height: 100%;
+        overflow-y: auto;
+        padding-bottom: 60px;
+        scroll-behavior: smooth;
+      }
+      #messages > li {
+        padding: 5px 10px;
+        border-radius: 999px;
+        width: fit-content;
+      }
+
+      .sended-messages {
+        align-self: end;
+      }
+      .message-content{
+        background-color: #464646;
+        padding: 5px 8px;
+        border-radius: 7px;
+      }
+      .message-author{
+        font-size: .8em;
+        color: #ffffff94;
+        display: block;
+        margin-top: 3px;
+        padding: 0px 4px;
+      }
+      .sended-messages .message-author {
+        text-align: right;
+      }
+    </style>
+  </head>
+  <body>
+    <section id="chat">
+      <h1>Chat</h1>
+      <ul id="messages">
+        <!-- Messages will be dynamically added here -->
+         <!-- Example message -->
+        <!-- <li class="sended-messages"><p class="message-content">Hola mundo!</p><span class="message-author">Jose Beltre</span></li>
+        <li class="received-messages"><p class="message-content">Hola mundo!</p><span class="message-author">Jose Beltre</span></li> -->
+        
+      </ul>
+    </section>
+    <form action="">
+      <input
+        type="text"
+        id="message"
+        placeholder="Escribe tu mensaje..."
+        required
+      />
+      <button type="submit">Enviar</button>
+    </form>
+  </body>
+</html>
